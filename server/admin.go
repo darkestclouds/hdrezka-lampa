@@ -4,8 +4,8 @@ package main
 //
 // Доступ: по умолчанию только с этого компьютера (loopback); admin_lan=true — со всей локальной сети
 // (в Docker/Umbrel запросы приходят с частного адреса шлюза или прокси).
-// Токен здесь не нужен — вместо него проверяются адрес клиента, заголовок Host (только localhost, IP или имена
-// из admin_hosts — защита от DNS rebinding) и для POST — JSON + Origin своего же хоста (защита от CSRF).
+// Токен здесь не нужен — вместо него проверяются адрес клиента, заголовок Host (IP, localhost, локальные имена
+// или имена из admin_hosts — защита от DNS rebinding) и для POST — JSON + Origin своего же хоста (защита от CSRF).
 // Прокси Umbrel передаёт исходный Host (changeOrigin: false), поэтому проверки работают и за ним.
 
 import (
@@ -27,9 +27,35 @@ func isAdminPath(path string) bool {
 	return path == "/" || strings.HasPrefix(path, "/admin/")
 }
 
+// localSuffixes — зоны, которые разрешаются только внутри домашней сети (mDNS, роутер, RFC 8375/6762)
+var localSuffixes = []string{".local", ".lan", ".home", ".home.arpa", ".internal", ".localdomain", ".localhost"}
+
+// isLocalHostname: имя, которое нельзя получить из интернета, — значит, страница с чужого сайта
+// не сможет через него обратиться к серверу (DNS rebinding работает только с публичными доменами).
+// Короткое имя без точки (umbrel, nas) или имя в локальной зоне (umbrel.local, nas.lan).
+func isLocalHostname(h string) bool {
+	if h == "" || net.ParseIP(h) != nil {
+		return false
+	}
+	if !strings.Contains(h, ".") {
+		return true
+	}
+	for _, s := range localSuffixes {
+		if strings.HasSuffix(h, s) {
+			return true
+		}
+	}
+	return false
+}
+
+// hostAllowed: IP, localhost, локальное имя или имя из admin_hosts
+func hostAllowed(h string, extra map[string]bool) bool {
+	return net.ParseIP(h) != nil || isLocalHostname(h) || extra[h]
+}
+
 // withAdminGuard пропускает к интерфейсу только «своих».
 func withAdminGuard(allowLAN bool, allowHosts []string, next http.Handler) http.Handler {
-	allowed := map[string]bool{"localhost": true}
+	allowed := map[string]bool{}
 	for _, h := range allowHosts {
 		allowed[strings.ToLower(h)] = true
 	}
@@ -55,10 +81,9 @@ func withAdminGuard(allowLAN bool, allowHosts []string, next http.Handler) http.
 			return
 		}
 
-		// Host — localhost, IP или имя из admin_hosts: чужое доменное имя здесь означает DNS rebinding
-		reqHost := hostOnly(r.Host)
-		if !allowed[reqHost] && net.ParseIP(reqHost) == nil {
-			deny("откройте интерфейс по IP-адресу, localhost или имени из admin_hosts")
+		// Публичное доменное имя здесь означает DNS rebinding — такие пропускаются только из admin_hosts
+		if !hostAllowed(hostOnly(r.Host), allowed) {
+			deny("откройте интерфейс по IP-адресу или локальному имени (umbrel, umbrel.local); другие имена — в admin_hosts")
 			return
 		}
 

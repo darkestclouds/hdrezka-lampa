@@ -6,6 +6,21 @@ import (
 	"testing"
 )
 
+func TestHostAllowed(t *testing.T) {
+	extra := map[string]bool{"media.example.com": true}
+	for _, h := range []string{"umbrel", "nas", "localhost", "umbrel.local", "nas.lan", "box.home.arpa",
+		"srv.internal", "192.168.1.10", "10.21.21.9", "::1", "media.example.com"} {
+		if !hostAllowed(h, extra) {
+			t.Errorf("hostAllowed(%q) = false, want true", h)
+		}
+	}
+	for _, h := range []string{"evil.example", "attacker.com", "umbrel.local.evil.com", "lan.evil.org", ""} {
+		if hostAllowed(h, extra) {
+			t.Errorf("hostAllowed(%q) = true, want false", h)
+		}
+	}
+}
+
 func TestNormalizeMirror(t *testing.T) {
 	ok := map[string]string{
 		"example.com":                    "https://example.com",
