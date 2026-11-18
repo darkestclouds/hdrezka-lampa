@@ -1,0 +1,20 @@
+# Обычный Docker (не Umbrel): сборка из исходников и запуск.
+#   cd docker
+#   mkdir -p data && sudo chown 1000:1000 data      # контейнер работает от UID 1000
+#   docker compose up -d --build
+# Веб-интерфейс: http://<адрес сервера>:8765/ — там задаётся зеркало HDRezka.
+services:
+  hdrezka:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: hdrezka-server:0.1.0
+    restart: on-failure
+    init: true
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/data
+    environment:
+      # Имена, по которым можно открыть веб-интерфейс, кроме IP и localhost (через запятую), например nas.local
+      HDREZKA_ADMIN_HOSTS: ""

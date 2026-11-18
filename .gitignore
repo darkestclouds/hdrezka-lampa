@@ -1,0 +1,10 @@
+node_modules/
+dist/
+
+server/config.json
+server/data/
+server/vendor/
+server/hdrezka-server
+server/*.exe
+
+docker/data/

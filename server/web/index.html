@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HDRezka Server</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #000000;
+    --muted: #6e6e6e;
+    --line: #000000;
+    --soft: #f2f2f2;
+    --accent: #ff4d00;
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.55 var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 16px 64px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--line);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .pill {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .pill::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border: 1px solid var(--fg);
+    vertical-align: 1px;
+  }
+
+  .pill.ok::before { background: var(--accent); border-color: var(--accent); }
+
+  section {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h2 {
+    margin: 0 0 18px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  h2 b { color: var(--accent); font-weight: 700; margin-right: 10px; }
+
+  dl {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 16px;
+    margin: 0 0 20px;
+  }
+
+  dt { color: var(--muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.06em; padding-top: 1px; }
+  dd { margin: 0; word-break: break-all; }
+
+  .mark::before { content: "■ "; color: var(--accent); }
+  .nomark::before { content: "□ "; }
+
+  p { margin: 0 0 14px; }
+  .muted { color: var(--muted); }
+
+  .url {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+
+  .url code {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font: inherit;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .url button { border-width: 0 0 0 1px; }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  input, textarea {
+    display: block;
+    width: 100%;
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 0;
+    outline: none;
+  }
+
+  textarea { min-height: 72px; resize: vertical; }
+
+  input:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+  button {
+    appearance: none;
+    padding: 10px 16px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 0;
+    cursor: pointer;
+  }
+
+  button:hover { background: var(--fg); color: var(--bg); }
+  button.primary { background: var(--fg); color: var(--bg); }
+  button.primary:hover { background: var(--accent); border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 26px 0 18px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px dashed var(--line); }
+
+  .inline {
+    display: flex;
+    margin-bottom: 14px;
+  }
+
+  .inline input { margin: 0; }
+  .inline button { border-left: 0; white-space: nowrap; }
+
+  .warn {
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+
+  #log {
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12px;
+    min-height: 1.6em;
+  }
+
+  #log li::before { content: "> "; color: var(--muted); }
+  #log li.err { color: var(--accent); }
+  #log li.err::before { content: "! "; color: var(--accent); }
+
+  footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 560px) {
+    dl { grid-template-columns: 1fr; gap: 2px 0; }
+    dd { margin-bottom: 10px; }
+    .grid { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HDREZKA<span>_</span>SERVER</h1>
+    <div class="pill" id="pill">загрузка…</div>
+  </header>
+
+  <section>
+    <h2><b>01</b>Зеркало HDRezka</h2>
+    <p class="muted">Адрес рабочего зеркала сайта. Встроенных адресов в сервере нет — без зеркала он к сайту не обращается.</p>
+    <label for="mirror-input">Адрес зеркала</label>
+    <div class="inline">
+      <input id="mirror-input" spellcheck="false" autocomplete="off" placeholder="https://адрес-зеркала">
+      <button class="primary" id="btn-mirror">Сохранить</button>
+    </div>
+  </section>
+
+  <section>
+    <h2><b>02</b>Статус</h2>
+    <dl>
+      <dt>Зеркало</dt><dd id="mirror">—</dd>
+      <dt>Сессия</dt><dd id="session">—</dd>
+      <dt>Премиум</dt><dd id="premium" class="muted">нажмите «проверить»</dd>
+    </dl>
+    <div class="row">
+      <button id="btn-check">Проверить сайт</button>
+    </div>
+  </section>
+
+  <section>
+    <h2><b>03</b>Установка в Lampa</h2>
+    <p class="muted">Lampa → Настройки → Расширения → Добавить плагин. Адрес сервера и токен уже вшиты в плагин.</p>
+    <div id="plugin-warn" class="warn" hidden>Плагин не собран: выполните <code>npm run build</code>.</div>
+    <div id="urls"></div>
+  </section>
+
+  <section>
+    <h2><b>04</b>Приложение Apple TV</h2>
+    <p class="muted">Добавить подключение → Вручную → адрес ниже → «Определить и проверить».</p>
+    <div id="app-urls"></div>
+  </section>
+
+  <section>
+    <h2><b>05</b>Аккаунт HDRezka</h2>
+    <p class="muted">Логин и пароль нужны серверу только чтобы войти на сайт. Сохраняются лишь куки сессии, пароль нигде не хранится.</p>
+    <div class="grid">
+      <div>
+        <label for="login">Логин или e-mail</label>
+        <input id="login" autocomplete="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="password">Пароль</label>
+        <input id="password" type="password" autocomplete="off">
+      </div>
+    </div>
+    <div class="row">
+      <button class="primary" id="btn-login">Войти</button>
+      <button id="btn-logout">Выйти</button>
+    </div>
+
+    <div class="divider">или куки из браузера</div>
+
+    <label for="cookies">Строка кук</label>
+    <textarea id="cookies" spellcheck="false" placeholder="dle_user_id=…; dle_password=…"></textarea>
+    <div class="row">
+      <button id="btn-cookies">Сохранить куки</button>
+    </div>
+  </section>
+
+  <ul id="log"></ul>
+
+  <footer>go-hdrezka · MIT</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function log(text, isError) {
+    var li = document.createElement('li');
+    li.textContent = new Date().toLocaleTimeString() + '  ' + text;
+    if (isError) li.className = 'err';
+    var list = $('log');
+    list.insertBefore(li, list.firstChild);
+    while (list.children.length > 6) list.removeChild(list.lastChild);
+  }
+
+  function request(method, path, body) {
+    var opts = { method: method, headers: {} };
+    if (body) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(path, opts).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (json) {
+        if (!res.ok) throw new Error(json.message || json.error || ('HTTP ' + res.status));
+        return json;
+      });
+    });
+  }
+
+  function busy(button, on) {
+    button.disabled = on;
+  }
+
+  function copy(text, button) {
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = 'Скопировано';
+      setTimeout(function () { button.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+    } else {
+      fallback();
+    }
+    function fallback() {
+      var area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); done(); } catch (e) { log('не удалось скопировать', true); }
+      document.body.removeChild(area);
+    }
+  }
+
+  function renderUrls(box, list) {
+    box.textContent = '';
+    (list || []).forEach(function (u) {
+      var row = document.createElement('div');
+      row.className = 'url';
+      var code = document.createElement('code');
+      code.textContent = u;
+      var btn = document.createElement('button');
+      btn.textContent = 'Копировать';
+      btn.addEventListener('click', function () { copy(u, btn); });
+      row.appendChild(code);
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+    if (!box.children.length) {
+      var p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = 'Не нашёл сетевых адресов этого компьютера.';
+      box.appendChild(p);
+    }
+  }
+
+  function render(st) {
+    var logged = Boolean(st.logged_in);
+
+    $('mirror').textContent = st.mirror || st.configured_mirror || '—';
+
+    // поле зеркала заполняем, только пока пользователь его не правит
+    var mirrorInput = $('mirror-input');
+    if (document.activeElement !== mirrorInput && !mirrorInput.dataset.dirty) {
+      mirrorInput.value = st.configured_mirror || '';
+    }
+
+    var session = $('session');
+    session.textContent = logged ? 'вход выполнен' : 'без входа';
+    session.className = logged ? 'mark' : 'nomark';
+
+    if (typeof st.premium === 'boolean') {
+      $('premium').textContent = st.premium ? 'да' : 'нет';
+      $('premium').className = st.premium ? 'mark' : 'nomark';
+    }
+
+    var pill = $('pill');
+    if (!st.configured_mirror) {
+      pill.textContent = 'зеркало не задано';
+      pill.className = 'pill';
+    } else if (st.error) {
+      pill.textContent = 'сайт недоступен';
+      pill.className = 'pill';
+    } else {
+      pill.textContent = logged ? 'online · аккаунт' : 'online · гость';
+      pill.className = 'pill ok';
+    }
+
+    $('plugin-warn').hidden = st.plugin_built !== false;
+
+    renderUrls($('urls'), st.plugin_urls);
+    renderUrls($('app-urls'), st.app_urls);
+
+    if (st.error) log(st.error, true);
+  }
+
+  function load(check) {
+    return request('GET', '/admin/status' + (check ? '?check=1' : '')).then(render);
+  }
+
+  $('mirror-input').addEventListener('input', function () { this.dataset.dirty = '1'; });
+  $('mirror-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('btn-mirror').click();
+  });
+
+  $('btn-mirror').addEventListener('click', function () {
+    var b = this;
+    var input = $('mirror-input');
+    busy(b, true);
+    log('проверяю зеркало…');
+    request('POST', '/admin/mirror', { mirror: input.value.trim() })
+      .then(function (res) {
+        delete input.dataset.dirty;
+        input.value = res.mirror || '';
+        if (!res.mirror) log('зеркало очищено');
+        else if (res.error) log('зеркало сохранено, но сейчас недоступно: ' + res.error, true);
+        else log('зеркало сохранено и работает: ' + res.mirror);
+        return load(false);
+      })
+      .catch(function (e) { log(e.message, true); })
+      .then(function () { busy(b, false); });
+  });
+
+  $('btn-check').addEventListener('click', function () {
+    var b = this;
+    busy(b, true);
+    log('проверяю сайт…');
+    load(true).then(function () { log('проверка завершена'); })
+      .catch(function (e) { log(e.message, true); })
+      .then(function () { busy(b, false); });
+  });
+
+  $('btn-login').addEventListener('click', function () {
+    var b = this;
+    var login = $('login').value.trim();
+    var password = $('password').value;
+    if (!login || !password) { log('введите логин и пароль', true); return; }
+    busy(b, true);
+    log('вхожу…');
+    request('POST', '/admin/login', { login: login, password: password })
+      .then(function () {
+        $('password').value = '';
+        log('вход выполнен');
+        return load(false);
+      })
+      .catch(function (e) { log(e.message, true); })
+      .then(function () { busy(b, false); });
+  });
+
+  $('btn-cookies').addEventListener('click', function () {
+    var b = this;
+    var cookies = $('cookies').value.trim();
+    if (!cookies) { log('вставьте строку кук', true); return; }
+    busy(b, true);
+    request('POST', '/admin/cookies', { cookies: cookies })
+      .then(function () {
+        $('cookies').value = '';
+        log('куки сохранены');
+        return load(false);
+      })
+      .catch(function (e) { log(e.message, true); })
+      .then(function () { busy(b, false); });
+  });
+
+  $('btn-logout').addEventListener('click', function () {
+    var b = this;
+    busy(b, true);
+    request('POST', '/admin/logout', {})
+      .then(function () {
+        log('сессия удалена');
+        $('premium').textContent = '—';
+        $('premium').className = 'muted';
+        return load(false);
+      })
+      .catch(function (e) { log(e.message, true); })
+      .then(function () { busy(b, false); });
+  });
+
+  $('password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('btn-login').click();
+  });
+
+  load(false).catch(function (e) { log(e.message, true); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "hdrezka",
+  "description": "Порядок склейки исходников в один IIFE для Lampa",
+  "modules": [
+    "config.js",
+    "i18n.js",
+    "api.js",
+    "settings.js",
+    "templates.js",
+    "styles/inject.js",
+    "ui/component.js",
+    "ui/button.js",
+    "bootstrap.js"
+  ],
+  "css": "styles/hdrezka.css",
+  "cssPlaceholder": "/* __INJECT_CSS__ */"
+}

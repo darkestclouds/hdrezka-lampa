@@ -1,0 +1,10 @@
+# Контекст — корень репозитория. В образ попадает только нужное для сборки.
+**/node_modules
+dist
+docker
+README.md
+server/vendor
+server/config.json
+server/data
+server/*.exe
+server/hdrezka-server
